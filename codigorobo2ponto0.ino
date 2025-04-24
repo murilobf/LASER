@@ -79,6 +79,7 @@ int sonar(){
 }
 
 //Funções de movimentação 
+
 void viraEsquerda(){
   motorE.setSpeed(velocidade);
   motorD.setSpeed(velocidade);
@@ -105,9 +106,10 @@ void viraDireita(){
   motorD.run(RELEASE);
   delay(1000);
 
-  //O código abaixo é responsável por fazer ele voltar pra direção original, se possível
+  //O código abaixo é responsável por fazer ele voltar pra direção original, se possível, ou a continuar contornando se necessário
 
   rotina();
+  viraEsquerda();
 }
 
 void andaFrente(){
@@ -149,11 +151,15 @@ void setup() {
   pulsos2 = 0;
 
   timeold = millis();
+  Serial.begin(9600);
+
+  distancia = 0;
+  duracao = 0;  
 }
 
 //Essa variação do código original tenta sempre seguir pelo mesmo caminho,
 //virando pra direita pra desviar de obstáculos mas voltando pra direção original se possível
 void loop() {
-  igualaVel();
+  //igualaVel();
   rotina();
 }

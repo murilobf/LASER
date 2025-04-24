@@ -8,9 +8,63 @@ uint8_t velocidade = 150;
 uint8_t TRIG = 40;
 uint8_t ECHO = 38;
 
+uint8_t pinoSensor1 = 19;
+uint8_t pinoSensor2 = 20;
+
 int duracao;
 int distancia;
 int distancia_min = 35;
+
+unsigned int pulsos1;
+unsigned int pulsos2;
+volatile double timeold;
+
+//Funções executadas a cada interrupção
+void contador1(){
+  pulsos1++;
+}
+
+void contador2(){
+  pulsos2;
+}
+
+//Iguala a velocidade dos motores
+void igualaVel(){
+  if(millis() - timeold >= 1){
+    if(pulsos1 < pulsos2){
+      detachInterrupt(3);
+
+      //Iguala os motores
+      while(pulsos1 < pulsos2){
+        motorD.run(RELEASE);
+        motorE.setSpeed(velocidade);
+        motorE.run(FORWARD);
+      }
+
+      attachInterrupt(3, contador2, FALLING);
+    }
+
+    else if(pulsos1 > pulsos2){
+      detachInterrupt(4);
+
+      //Iguala os motores
+      while(pulsos1 > pulsos2){
+        motorE.run(RELEASE);
+        motorD.setSpeed(velocidade);
+        motorD.run(FORWARD);
+      }
+
+      attachInterrupt(4, contador1, FALLING);
+    }
+
+    else{
+      pulsos1 = 0;
+      pulsos2 = 0;
+    }
+
+    timeold = millis();
+  }
+}
 
 //Função do sensor ultrassonico
 int sonar(){
@@ -53,18 +107,7 @@ void viraDireita(){
 
   //O código abaixo é responsável por fazer ele voltar pra direção original, se possível
 
-  int dist = sonar();
-
-  //Vira pra direita novamente se necessário
-  if(dist >= 0 && dist <= distancia_min){
-    viraDireita();
-  }
-
-  //Anda um pouco pra ser possível desviar do obstáculo
-  andaFrente();
-
-  //Volta pra direção original
-  viraEsquerda();
+  rotina();
 }
 
 void andaFrente(){
@@ -80,15 +123,8 @@ void andaFrente(){
   delay(1000);
 }
 
-void setup() {
-  pinMode(TRIG, OUTPUT);  
-  pinMode(ECHO, INPUT);
-}
-
-//Essa variação do código original tenta sempre seguir pelo mesmo caminho,
-//virando pra direita pra desviar de obstáculos mas voltando pra direção original se possível
-void loop() {
-
+//A rotina a ser chamada no loop, está separado ao invés de no loop principal pois também é usada na função de virar à direita
+void rotina(){
   //Verifica a distância
   distancia = sonar();
 
@@ -97,7 +133,27 @@ void loop() {
     viraDireita();
   }
 
-  else{
-    andaFrente();
-  }
+  andaFrente();
+}
+
+void setup() {
+  pinMode(TRIG, OUTPUT);  
+  pinMode(ECHO, INPUT);
+  pinMode(pinoSensor1, INPUT);
+  pinMode(pinoSensor2, INPUT);
+  
+  attachInterrupt(4, contador1, FALLING);
+  attachInterrupt(3, contador2, FALLING);
+
+  pulsos1 = 0;
+  pulsos2 = 0;
+
+  timeold = millis();
+}
+
+//Essa variação do código original tenta sempre seguir pelo mesmo caminho,
+//virando pra direita pra desviar de obstáculos mas voltando pra direção original se possível
+void loop() {
+  igualaVel();
+  rotina();
 }
